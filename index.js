@@ -1,30 +1,18 @@
-const http = require("http");
-const fs = require("fs");
-const url = require("url")
+const express = require("express");
+const {logReqRes} = require("./middleware")
+const { connectMongoDb } = require("./connection");
+const userRouter = require("./routes/user")
 
-const myServer = http.createServer((req,res)=>{
-    if(req.url ==="/favicon.ico") return res.end();
-    const log = `${Date.now()} : ${req.url} :new request from server \n`
-    fs.appendFile("log.txt",log,(err,data)=>{
-        const myurl = url.parse(req.url,true);
-        console.log(myurl);
+const port = 8000;
+//connecting mongoDB
+connectMongoDb('mongodb://127.0.0.1:27017/projectrest').then(()=> console.log("MongoDb Connected!"));
+// Schema
+const app = express();
+// middleware - plugin
+app.use(express.urlencoded({extended: false}));
 
-        switch(myurl.pathname){
-            
-            case "/about" :const userName = myurl.query.myname;
-            res.end(`hello this ${userName}`);
-            break;
-            case "/contact-us": res.end("Hello This Is contact  Page");
-            break;
-            default: res.end("404 page not found");
-        }
+app.use(logReqRes("log.txt"));
 
-    })
-    
+app.use("/api/users",userRouter);
 
-    
-
-})
-myServer.listen(8000,()=>{
-    console.log('Server connected');
-})
+app.listen(port,()=> console.log(`Server Started at PORT:${port}`));
